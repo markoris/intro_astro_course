@@ -1,0 +1,29 @@
+import numpy as np
+from astropy.utils.data import get_pkg_data_filename
+from astropy.io import fits
+import matplotlib.pyplot as plt
+import os
+
+## Get file from own path
+mypath = str(os.getcwd())
+Rband = mypath + '/Rband.fits'
+hdul = fits.open(Rband)
+hdul.info()
+
+## Get image from astropy
+#image_file = get_pkg_data_filename('tutorials/FITS-images/HorseHead.fits')
+#fits.info(image_file)
+
+## Load image from directory
+header = hdul[0].header
+data = hdul[0].data
+
+## Load astropy image data
+#image_data = fits.getdata(image_file, ext=0)
+
+## Plotting data
+from astropy.visualization import astropy_mpl_style
+plt.style.use(astropy_mpl_style)
+plt.figure()
+plt.imshow(data, cmap='gray', vmin=10, vmax=1000)
+plt.colorbar()
