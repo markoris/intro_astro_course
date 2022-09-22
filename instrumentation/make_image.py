@@ -24,8 +24,9 @@ def multivariate_gaussian(pos, mu, Sigma):
     # This einsum call calculates (x-mu)T.Sigma-1.(x-mu) in a vectorized
     # way across all the input variables.
     fac = np.einsum('...k,kl,...l->...', pos-mu, Sigma_inv, pos-mu)
-
-    return np.exp(-fac / 2) / N
+    fac = np.exp(-fac / 2) / N
+    fac /= np.max(fac)
+    return fac
 
 def make_star_image(n_pixels, multiple=False):
 	
@@ -62,4 +63,10 @@ def write_fits(image, filename):
 	from astropy.io import fits
 	hdu = fits.PrimaryHDU(image)
 	hdul = fits.HDUList([hdu])
-	hdul.writeto(filename)
+	try:
+		hdul.writeto(filename)
+	except IOError:
+		import os
+		os.remove(filename)
+		hdul.writeto(filename)
+		
