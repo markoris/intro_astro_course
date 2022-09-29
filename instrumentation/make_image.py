@@ -28,38 +28,47 @@ def multivariate_gaussian(pos, mu, Sigma):
     fac /= np.max(fac)
     return fac
 
-def make_star_image(n_pixels, multiple=False):
-	
-	'''
-	We want 0 covariance, same-sigma matrix for stars since they are, indeed, spherical
-	'''
-
-	mu = np.random.uniform(0.2, 0.8, size=2)
-	sigma = np.random.uniform(1, 5)/(2*n_pixels)
-	sigma = np.array([[sigma, 0],
-			 [0, sigma]])
-	pos = image_grid(n_pixels)
-	star_image = multivariate_gaussian(pos, mu, sigma)
-	return star_image
-		
-
-def make_galaxy_image(n_pixels, multiple=False):
+def make_image(n_pixels, n_objects=1):
 	'''
 	write me
 	'''
-	galaxy_image = 0
-	#sigma = np.array([[np.random.uniform(0.1, 0.4), np.random.uniform(0, 0.2)],
-	#		 [np.random.uniform(0, 0.2,), np.random.uniform(0.1, 0.4)]])
-	#sigma = np.array([[np.random.uniform(0.01, 0.1), 0],
-	#		 [0, np.random.uniform(0.01, 0.1)]])
-	return galaxy_image
+
+	probabilities = np.random.uniform(size=n_objects)
+
+	for i in range(n_objects):
+
+		if probabilities[i] > 0.5: obj = 'galaxy'
+		else: obj = 'star'
+
+		scale_factor = 0.2
+		if i > 1: scale_factor = 3
+
+		mu = np.random.uniform(0, 1, size=2)
+		if obj == 'galaxy':
+			sigma = np.array([[np.random.uniform(0.2, 0.3), np.random.uniform(-0.2, 0.2)],
+				 [np.random.uniform(-0.2, 0.2), np.random.uniform(0.2, 0.3)]])
+		else:
+			sigma = np.random.uniform(0.4, 0.8)
+			sigma = np.array([[sigma, 0],
+				 [0, sigma]])
+			
+		sigma /= (2*n_pixels)*scale_factor
+		pos = image_grid(n_pixels)
+		try:
+			image += multivariate_gaussian(pos, mu, sigma)
+		except NameError:
+			image = multivariate_gaussian(pos, mu, sigma)
+
+	return image
 
 def plot_image(image):
+
 	import matplotlib.pyplot as plt
 	plt.imshow(image)
 	plt.show()
 
 def write_fits(image, filename):
+
 	from astropy.io import fits
 	hdu = fits.PrimaryHDU(image)
 	hdul = fits.HDUList([hdu])
