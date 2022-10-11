@@ -25,7 +25,7 @@ class Image():
 
 		probabilities = np.random.uniform(size=n_objects)
 		mus = np.random.uniform(0.05, 0.95, size=(n_objects,2))
-		r = np.array([np.sqrt((mu1[0]-mu2[0])**2 + (mu1[1]-mu2[1])**2) for mu1 in mus for mu2 in mus])
+		r = np.array([np.sqrt(np.sum((mu1-mu2)**2)) for mu1 in mus for mu2 in mus])
 		r = np.unique(r[np.where(r > 0)[0]])
 		criterion = 0.1-((n_objects-10)*0.0025)
 		while np.any(r < criterion):
