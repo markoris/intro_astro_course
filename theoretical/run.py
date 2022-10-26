@@ -1,7 +1,8 @@
 import numpy as np
-import blackbody as bb
+import star
 
-wavelength = np.linspace(0.1, 2, 500) * 10**-6
-temperature = [6000, 7000, 8000]
-bb.bb_plot(wavelength, temperature)
+wavelength = np.linspace(1, 50, 500) * 10**-7
 
+star1 = star.Star('K')
+star2 = star.Star('A')
+star.bb_plot([star1,star2], wavelength)
