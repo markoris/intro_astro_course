@@ -27,6 +27,10 @@ class Star:
     def energy(self):
         return sig * self.temp**4
 
+    def color(self):
+        spec_color = {"O": "blue", "B": "cyan", "A": "lime", "F": "green", "G": "greenyellow", "K": "orange", "M": "darkred"}
+        return spec_color[self.spec_type]
+
     ## Blackbody/Planck function
     def planck(self, wav):
         a = (2.0 * h * c**2) / wav**5
@@ -37,10 +41,16 @@ class Star:
 ## plotting function
 def bb_plot(star, wav):
     if len(star) == 1:
-        plt.plot(wav, star[0].planck(wav))
+        plt.plot(wav*1e9, star[0].planck(wav), color=star[0].color(), label=star[0].spec_type)
     else:
         for i in range(len(star)):
-            plt.plot(wav, star[i].planck(wav))
+            plt.plot(wav*1e9, star[i].planck(wav), color=star[i].color(), label=star[i].spec_type)
     plt.xlabel('Wavelength')
     plt.ylabel('Intensity')
+    plt.xscale('log')
+    plt.yscale('log')
+    #plt.gca().set_xticks(np.arange(np.min(wav*1e9), np.max(wav*1e9), 1000))
+    #plt.gca().set_xticklabels(np.arange(np.min(wav*1e9), np.max(wav*1e9), 1000))
+    plt.xlabel('Wavelength (nanometers)')
+    plt.legend()
     plt.show()
