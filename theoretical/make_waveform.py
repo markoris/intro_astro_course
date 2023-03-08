@@ -61,7 +61,8 @@ fiducial_event_time=1000000000
 fiducial_ra =0
 fiducial_dec=0
 
-approx='TaylorF2'
+#approx='TaylorF2'
+approx='IMRPhenomXHM'
 fmin_template=20
 
 ifos = ['H1','L1', 'V1']
