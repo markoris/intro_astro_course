@@ -30,14 +30,6 @@ n_events=1
 mass1 = opts.mass1
 mass2 = opts.mass2
 
-# **** might need to be tweaked !!**** need a range such that waveforms appear diff
-#m_chirp = (mass1*mass2)**(3./5.)*(mass1+mass2)**(-1./5.)
-#mc_min=int(m_chirp)
-#mc_max= mc_min+5
-#mc_range = [mc_min,mc_max]
-#m_min=1
-#print(mc_range)
-
 d_min = opts.distance
 d_max = d_min + 100
 
@@ -95,21 +87,9 @@ if use_eccentric:
     P.fecc = 20.0
 P.approx=lalsim.GetApproximantFromString(approx)
     
-# Uniform in m1 and m2: 
-#m1 = np.random.uniform(mc_range[0],mc_range[1]*2)
-#m2 = np.random.uniform(m_min,mc_range[1]*1.5)
-#m1,m2 = [np.maximum(m1,m2), np.minimum(m1,m2)]
+# User input masses
 P.m1 = mass1*lal.MSUN_SI
 P.m2 = mass2*lal.MSUN_SI
-    
-# downselect in mchirp, eta
-mc_val = P.extract_param('mc')/lal.MSUN_SI
-eta_val = P.extract_param('eta')
-# Check rand vals are within specified ranges after converting inputs
-#if mc_val < mc_range[0] or mc_val > mc_range[1]:
-#    continue
-#if eta_val < eta_range[0] or eta_val > eta_range[1]:
-#    continue
 
 P_list.append(P)
     
