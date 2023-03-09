@@ -16,7 +16,10 @@ from RIFT.misc.dag_utils import mkdir
 import RIFT.lalsimutils as lalsimutils
 from RIFT.misc.dag_utils import which
 lalapps_path2cache = which('lal_path2cache')
-from ligo.lw import lsctables, table, utils 
+from ligo.lw import lsctables, table, utils
+
+from gwpy.timeseries import TimeSeries
+from gwpy.plot import Plot
 
 class blackHole:
     
@@ -35,13 +38,14 @@ class binaryBH:
     """
     Uses black hole objects to create BBH coalescence GW signals
     """
+
+    tref = 1000000000
     
-    def __init__(self, bh1, bh2, tref=None, wave=None):
+    def __init__(self, bh1, bh2, wave=None):
         self.bh1 = bh1
         self.bh2 = bh2
-        self.tref = None
         self.wave = None
-        
+                
     def setParams(self, m1=10.*lal.MSUN_SI, m2=10.*lal.MSUN_SI, dist=1.e6*lal.PC_SI,
             s1x=0., s1y=0., s1z=0., s2x=0., s2y=0., s2z=0., eccentricity=0.,
             tref=1000000000, fmin=20., approx='TaylorF2', 
@@ -72,7 +76,6 @@ class binaryBH:
         thisWave.eccentricity = eccentricity
         
         # params relevant for waveform creation
-        self.tref = tref
         thisWave.tref = tref
         thisWave.fmin = fmin
         thisWave.approx = approx   # Using IMRPhenomXHM or TaylorF2 for now
@@ -89,9 +92,8 @@ class binaryBH:
 
 
     def makeWaveform(self):
-        print("make a waveform")
-        t_start = int(self.tref) - 150
-        t_stop = int(self.tref) + 150
+        t_start = int(binaryBH.tref) - 150
+        t_stop = int(binaryBH.tref) + 150
         ifos = ['H1','L1','V1']
         working_dir_full = os.getcwd()
         for ifo in ifos:
@@ -102,7 +104,6 @@ class binaryBH:
             sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
             self.wave.copy_sim_inspiral(sim_inspiral_table[0])
             self.wave.taper = lalsimutils.lsu_TAPER_START
-            #self.wave.approx = lalsim.GetApproximantFromString(approx)
             self.wave.detector = ifo
     
             # duration based on Newtonian inspiral [fmin, inf]
@@ -120,11 +121,40 @@ class binaryBH:
             tstart = int(hoft.epoch)
             duration = int(round(hoft.data.length*hoft.deltaT))
             fname = instrument.replace("1","")+"-fake_strain.gwf"
-
+            
             lalsimutils.hoft_to_frame_data(fname,channel,hoft)
 
     def plotWaveform(self):
-        print("plot a waveform")
+
+        """
+        Make the plot of signal strain vs time
+        """
+        self.makeWaveform()
+
+        # Time series data
+        working_dir_full = os.getcwd()
+        dataL1 = TimeSeries.read(working_dir_full+'/L-fake_strain.gwf','L1:FAKE-STRAIN')
+        dataH1 = TimeSeries.read(working_dir_full+'/H-fake_strain.gwf','H1:FAKE-STRAIN')
+        dataV1 = TimeSeries.read(working_dir_full+'/V-fake_strain.gwf','V1:FAKE-STRAIN')
+
+        # Calculates auto-spectral density
+        # turns time series into frequency series
+        dataL1_spec = dataL1.asd()
+        dataH1_spec = dataH1.asd()
+        dataV1_spec = dataV1.asd()
+
+        # Create plot using GWPy
+        plot = Plot(dataL1) #,dataH1)
+        ax = plot.gca()
+
+        ax.set_epoch(999999850)
+        ax.set_xlim(999999850+145,999999850+151)
+        ax.set_ylim(-1e-22, 1e-22)
+        ax.set_title("Mass1 = {}, Mass2 = {}".format(self.bh1.mass, self.bh2.mass))
+        ax.set_ylabel('GW Strain')
+        #ax.set_ylabel(r'GW strain ASD [strain$/\sqrt{\mathrm{Hz}}$]')
+
+        plot.show()
 
 
 
