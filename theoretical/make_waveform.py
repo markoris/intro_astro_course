@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
-# Uses pieces of util_LALWriteFrame.py from RIFT repository.
+# KJ Wagner 2023
+
+## TODO : add in zero padding so signal occupies stretch of plot
 
 import numpy as np
 import argparse
@@ -13,182 +15,157 @@ from RIFT.misc.dag_utils import mkdir
 import RIFT.lalsimutils as lalsimutils
 from RIFT.misc.dag_utils import which
 lalapps_path2cache = which('lal_path2cache')
+from ligo.lw import lsctables, table, utils
 
 from gwpy.timeseries import TimeSeries
 from gwpy.plot import Plot
 
-# User inputs
-parser = argparse.ArgumentParser()
-parser.add_argument("--mass1", default=20,type=int,help="Mass of BH 1, input by user")
-parser.add_argument("--mass2", default=10,type=int,help="Mass of BH 1, input by user")
-parser.add_argument("--distance", default=1000,type=int,help="Distance of system away in Mpc, input by user")
-opts =  parser.parse_args()
-
-# Priors
-n_events=1
-
-mass1 = opts.mass1
-mass2 = opts.mass2
-
-d_min = opts.distance
-d_max = d_min + 100
-
-eta_min=0.2
-eta_max=0.249999
-eta_range = [eta_min,eta_max]
-ecc_min = 0.05
-ecc_max = 0.3
-chi_max = 1
-
-# use spin and/or ecc params
-no_spin=True
-precessing_spin=False
-aligned_spin=False
-volumetric_spin=True
-use_eccentric = False
-
-# fix time and sky loc
-fiducial_event_time=1000000000
-fiducial_ra =0
-fiducial_dec=0
-
-# which lalsuite waveforms
-approx='IMRPhenomXHM'
-fmin_template=20
-
-# for making actual data frames
-ifos = ['H1','L1','V1']
-seglen_data = 16
-srate_data = 4096
-
-
-### Create the signal parameter dictionary ###
-
-P_list =[]
-P = lalsimutils.ChooseWaveformParams()
-# establish waveform params - randomize ensures correct values
-P.randomize(dMax=d_max,dMin=d_min,aligned_spin_Q=aligned_spin,volumetric_spin_prior_Q=volumetric_spin,sMax=chi_max)
-P.tref = fiducial_event_time
-P.fmin = fmin_template
-P.deltaF = 1./seglen_data
-P.deltaT = 1./srate_data
-# fixed sky location
-P.theta = fiducial_dec
-P.phi = fiducial_ra
-# Capability to include spin/ecc in waveforms
-if no_spin:
-    P.s1x=P.s1y=P.s1z=0
-    P.s2x=P.s2y=P.s2z=0
-elif aligned_spin:
-    P.s1x = P.s1y=0
-    P.s2x = P.s2y=0
-if use_eccentric:
-    P.eccentricity = np.random.uniform(ecc_min, ecc_max)
-    P.fecc = 20.0
-P.approx=lalsim.GetApproximantFromString(approx)
+class blackHole:
     
-# User input masses
-P.m1 = mass1*lal.MSUN_SI
-P.m2 = mass2*lal.MSUN_SI
-
-P_list.append(P)
+    """
+    Creates black hole object
+    mass in solar units, distance in Mpc
     
-# Saves signal parameters in lal usable format
-lalsimutils.ChooseWaveformParams_array_to_xml(P_list,"mdc")
+    """
+    
+    def __init__(self, mass, distance):
+        self.mass = mass
+        self.distance = distance
 
-### Make the signal frames to plot ###
+class binaryBH:
+    
+    """
+    Uses black hole objects to create BBH coalescence GW signals
+    """
 
-t_start = int(fiducial_event_time)-150
-t_stop = int(fiducial_event_time)+150
+    tref = 1000000000
+    
+    def __init__(self, bh1, bh2, wave=None):
+        self.bh1 = bh1
+        self.bh2 = bh2
+        self.wave = None
+                
+    def setParams(self, m1=10.*lal.MSUN_SI, m2=10.*lal.MSUN_SI, dist=1.e6*lal.PC_SI,
+            s1x=0., s1y=0., s1z=0., s2x=0., s2y=0., s2z=0., eccentricity=0.,
+            tref=1000000000, fmin=20., approx='TaylorF2', 
+            theta=0., phi=0., deltaF=1/16, deltaT=1./4096.            
+            ):
 
-working_dir_full = os.getcwd()
-
-mkdir('signal_frames')
-os.chdir(working_dir_full)
-print(working_dir_full)
-target_subdir = 'signal_frames'
-# Test if directory already exists
-if os.path.exists(target_subdir):
-    print(" Signal frames exist for event, skipping ")
-else:
-    print("Making new directory...")
-    mkdir(target_subdir)
-print(" Writing")
-os.chdir(working_dir_full+"/"+target_subdir)
-
-for ifo in ifos:
-    from ligo.lw import lsctables, table, utils 
-
-    # Create framework to write a signal with params from P
-    filename = working_dir_full+"/mdc.xml.gz"
-    instrument = ifo
-    xmldoc = utils.load_filename(filename, verbose = True, contenthandler =lalsimutils.cthdler)
-    sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
-    P.copy_sim_inspiral(sim_inspiral_table[0])
-    P.taper = lalsimutils.lsu_TAPER_START
-    P.approx = lalsim.GetApproximantFromString(approx)
-    P.detector = ifo
-
-    # duration based on Newtonian inspiral [fmin, inf]
-    T_est = lalsimutils.estimateWaveformDuration(P)
-    T_est = P.deltaT*lalsimutils.nextPow2(T_est/P.deltaT)
-    if T_est < seglen_data:
-        T_est = seglen_data
-    P.deltaF = 1./T_est
-
-    # generate TD waveform based on params
-    hoft = lalsimutils.hoft(P) 
+        if os.path.isfile('params.xml.gz'):
+            os.remove('params.xml.gz')
         
-    if seglen_data/hoft.deltaT > hoft.data.length:
-        TDlenGoal = int(seglen_data/hoft.deltaT)
-        hoft = lal.ResizeREAL8TimeSeries(hoft, 0, TDlenGoal)
+        # m1/m2/dist can be modified by user via blackHole object
+        self.m1 = self.bh1.mass
+        self.m2 = self.bh2.mass
+        self.distance = self.bh1.distance
+        
+        # Use lalsimutils from RIFT to create waveform params xml
+        thisWave = lalsimutils.ChooseWaveformParams()
+        d_min = self.distance
+        d_max = self.distance + 100
+        thisWave.randomize(dMax=d_max,dMin=d_min,aligned_spin_Q=False,
+                           volumetric_spin_prior_Q=False,sMax=1)
+        thisWave.m1 = self.m1*lal.MSUN_SI
+        thisWave.m2 = self.m2*lal.MSUN_SI
+        
+        # In case we want spin/ecc later
+        thisWave.s1x = s1x
+        thisWave.s1y = s1y
+        thisWave.s1z = s1z
+        thisWave.s2x = s2x
+        thisWave.s2y = s2y
+        thisWave.s2z = s2z
+        thisWave.eccentricity = eccentricity
+        
+        # params relevant for waveform creation
+        thisWave.tref = tref
+        thisWave.fmin = fmin
+        thisWave.approx = approx   # Using IMRPhenomXHM or TaylorF2 for now
+        thisWave.theta = theta     # declination
+        thisWave.phi = phi         # right ascension 
+        thisWave.deltaF = deltaF
+        thisWave.deltaT = deltaT
+        thisWave.approx = lalsim.GetApproximantFromString(thisWave.approx)
 
-    # zero pad some more on either side, to make sure the segment covers start to stop
-    if t_start and hoft.epoch > t_start:
-        nToAddBefore = int((float(hoft.epoch)-t_start)/hoft.deltaT)
-        #print(nToAddBefore, hoft.data.length)
-        ht = lal.CreateREAL8TimeSeries("Template h(t)", t_start , 0, hoft.deltaT, lalsimutils.lsu_DimensionlessUnit, hoft.data.length+nToAddBefore)
-        ht.data.data = np.zeros(ht.data.length)  # clear
-        ht.data.data[nToAddBefore:nToAddBefore+hoft.data.length] = hoft.data.data
-        hoft = ht
-
-    if t_stop and hoft.epoch+hoft.data.length*hoft.deltaT < t_stop:
-        nToAddAtEnd = int( (-(hoft.epoch+hoft.data.length*hoft.deltaT)+t_stop)/hoft.deltaT)
-        #print("Padding end ", nToAddAtEnd, hoft.data.length)
-        hoft = lal.ResizeREAL8TimeSeries(hoft,0, int(hoft.data.length+nToAddAtEnd))
-
-    channel = instrument+":FAKE-STRAIN"
-
-    tstart = int(hoft.epoch)
-    duration = int(round(hoft.data.length*hoft.deltaT))
-    fname = instrument.replace("1","")+"-fake_strain-"+str(tstart)+"-"+str(duration)+".gwf"
-
-    print("Writing signal with ", hoft.data.length*hoft.deltaT, " to file ", fname)
-    lalsimutils.hoft_to_frame_data(fname,channel,hoft)
+        self.wave = thisWave
+        thisWave = [thisWave]
+        # Saves signal parameters in lal usable format
+        return lalsimutils.ChooseWaveformParams_array_to_xml(thisWave,"params")
 
 
-### Make the plot of signal strain vs time ###
+    def makeWaveform(self):
+        t_start = int(binaryBH.tref) - 150
+        t_stop = int(binaryBH.tref) + 150
+        ifos = ['H1','L1','V1']
+        working_dir_full = os.getcwd()
+        
+        for ifo in ifos:
 
-# Time series data
-dataL1 = TimeSeries.read(working_dir_full+'/signal_frames/L-fake_strain-999999850-300.gwf','L1:FAKE-STRAIN')
-dataH1 = TimeSeries.read(working_dir_full+'/signal_frames/H-fake_strain-999999850-300.gwf','H1:FAKE-STRAIN')
-dataV1 = TimeSeries.read(working_dir_full+'/signal_frames/V-fake_strain-999999850-300.gwf','V1:FAKE-STRAIN')
+            if os.path.isfile(ifo+'-fake_strain.gwf'):
+                os.remove(working_dir_full+'/'+ifo+'-fake_strain.gwf')
+            
+            # Create framework to write a signal with params from P
+            filename = working_dir_full+"/params.xml.gz"
+            instrument = ifo
+            xmldoc = utils.load_filename(filename, verbose = True, contenthandler =lalsimutils.cthdler)
+            sim_inspiral_table = lsctables.SimInspiralTable.get_table(xmldoc)
+            self.wave.copy_sim_inspiral(sim_inspiral_table[0])
+            self.wave.taper = lalsimutils.lsu_TAPER_START
+            self.wave.detector = ifo
+    
+            # duration based on Newtonian inspiral [fmin, inf]
+            T_est = lalsimutils.estimateWaveformDuration(self.wave)
+            T_est = self.wave.deltaT*lalsimutils.nextPow2(T_est/self.wave.deltaT)
+            if T_est < 16:
+                T_est = 16
+                self.wave.deltaF = 1./T_est
 
-# Calculates auto-spectral density
-# turns time series into frequency series
-dataL1_spec = dataL1.asd()
-dataH1_spec = dataH1.asd()
-dataV1_spec = dataV1.asd()
+            # generate TD waveform based on params
+            hoft = lalsimutils.hoft(self.wave)
 
-# Create plot using GWPy
-plot = Plot(dataL1) #,dataH1)
-ax = plot.gca()
+            channel = instrument+":FAKE-STRAIN"
 
-ax.set_epoch(999999850)
-ax.set_xlim(999999850+145,999999850+151)
-ax.set_ylim(-1e-22, 1e-22)
-ax.set_title("Mass1 = {}, Mass2 = {}".format(mass1, mass2))
-ax.set_ylabel('GW Strain')
-#ax.set_ylabel(r'GW strain ASD [strain$/\sqrt{\mathrm{Hz}}$]')
+            ## TODO: add back in zero-padding to make signal occupy full xaxis
 
-plot.show()
+            tstart = int(hoft.epoch)
+            duration = int(round(hoft.data.length*hoft.deltaT))
+            fname = instrument.replace("1","")+"-fake_strain.gwf"
+                        
+            lalsimutils.hoft_to_frame_data(fname,channel,hoft)
+
+    def plotWaveform(self):
+
+        """
+        Make the plot of signal strain vs time
+        """
+        self.makeWaveform()
+
+        # Time series data
+        working_dir_full = os.getcwd()
+        dataL1 = TimeSeries.read(working_dir_full+'/L-fake_strain.gwf','L1:FAKE-STRAIN')
+        dataH1 = TimeSeries.read(working_dir_full+'/H-fake_strain.gwf','H1:FAKE-STRAIN')
+        dataV1 = TimeSeries.read(working_dir_full+'/V-fake_strain.gwf','V1:FAKE-STRAIN')
+
+        # Calculates auto-spectral density
+        # turns time series into frequency series
+        dataL1_spec = dataL1.asd()
+        dataH1_spec = dataH1.asd()
+        dataV1_spec = dataV1.asd()
+
+        # Create plot using GWPy
+        plot = Plot(dataL1) # ,dataH1, dataV1)
+        ax = plot.gca()
+
+        ax.set_epoch(999999850)
+        ax.set_xlim(999999850+145,999999850+151)
+        ax.set_ylim(-1e-22, 1e-22)
+        ax.set_title("Mass1 = {}, Mass2 = {}".format(self.bh1.mass, self.bh2.mass))
+        ax.set_ylabel('GW Strain')
+        #ax.set_ylabel(r'GW strain ASD [strain$/\sqrt{\mathrm{Hz}}$]')
+
+        #plot.show()
+
+
+
+
+
