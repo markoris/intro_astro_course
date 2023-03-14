@@ -51,6 +51,9 @@ class binaryBH:
             tref=1000000000, fmin=20., approx='TaylorF2', 
             theta=0., phi=0., deltaF=1/16, deltaT=1./4096.            
             ):
+
+        if os.path.isfile('params.xml.gz'):
+            os.remove('params.xml.gz')
         
         # m1/m2/dist can be modified by user via blackHole object
         self.m1 = self.bh1.mass
@@ -96,7 +99,12 @@ class binaryBH:
         t_stop = int(binaryBH.tref) + 150
         ifos = ['H1','L1','V1']
         working_dir_full = os.getcwd()
+        
         for ifo in ifos:
+
+            if os.path.isfile(ifo+'-fake_strain.gwf'):
+                os.remove(working_dir_full+'/'+ifo+'-fake_strain.gwf')
+            
             # Create framework to write a signal with params from P
             filename = working_dir_full+"/params.xml.gz"
             instrument = ifo
@@ -118,10 +126,12 @@ class binaryBH:
 
             channel = instrument+":FAKE-STRAIN"
 
+            ## TODO: add back in zero-padding to make signal occupy full xaxis
+
             tstart = int(hoft.epoch)
             duration = int(round(hoft.data.length*hoft.deltaT))
             fname = instrument.replace("1","")+"-fake_strain.gwf"
-            
+                        
             lalsimutils.hoft_to_frame_data(fname,channel,hoft)
 
     def plotWaveform(self):
