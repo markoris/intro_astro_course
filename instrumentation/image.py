@@ -18,7 +18,7 @@ class Image():
                  "dead_arrays": self.dead_arrays,
                  "telescope_cover": self.telescope_cover}
 
-    def add_objects(self, n_objects=20):
+    def add_objects(self, n_objects=20, prob=0.3):
         '''
         write me
         '''
@@ -35,7 +35,7 @@ class Image():
 
         for i in range(n_objects):
 
-            if probabilities[i] > 0.7: obj = 'galaxy'
+            if probabilities[i] < prob: obj = 'galaxy'
             else: obj = 'star'
 
             scale_factor = 0.5
@@ -106,7 +106,7 @@ class Image():
         
         self.image = np.where(((self.image < 0.01) & (self.image != 0)), 0, self.image)
         plt.imshow(self.image)
-        #plt.show()
+        plt.show()
 
     def write_fits(self, filename):
 
