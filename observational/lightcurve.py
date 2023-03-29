@@ -20,14 +20,16 @@ def fold(time, period):
 ## plot lightcurve
 def plot_lc(time, flux):
     plt.plot(time,flux)
+    plt.grid()
     plt.ylim([0.98,1.01])
-    plt.xlabel('time')
+    plt.xlabel('time (sec)')
     plt.ylabel('normalized flux')
     plt.show()
 
 ## Plot phase curve with folded time series    
 def plot_phase(time, flux):
     plt.plot(time,flux,'k.')
+    plt.grid()
     plt.ylim([0.98,1.01])
     plt.xlabel('phase')
     plt.ylabel('normalized flux')
