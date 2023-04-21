@@ -108,17 +108,17 @@ class Image():
         plt.imshow(self.image)
         plt.show()
 
-    def write_fits(self, filename):
-
-        from astropy.io import fits
-        hdu = fits.PrimaryHDU(self.image)
-        hdul = fits.HDUList([hdu])
-        try:
-            hdul.writeto(filename)
-        except IOError:
-            import os
-            os.remove(filename)
-            hdul.writeto(filename)
+#    def write_fits(self, filename):
+#
+#        from astropy.io import fits
+#        hdu = fits.PrimaryHDU(self.image)
+#        hdul = fits.HDUList([hdu])
+#        try:
+#            hdul.writeto(filename)
+#        except IOError:
+#            import os
+#            os.remove(filename)
+#            hdul.writeto(filename)
         
     def multivariate_gaussian(self, pos, mu, Sigma):
         """
