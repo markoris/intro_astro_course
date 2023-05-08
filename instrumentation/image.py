@@ -106,10 +106,13 @@ class Image():
         
         self.image = np.where(((self.image < 0.01) & (self.image != 0)), 0, self.image)
         plt.imshow(self.image)
-        plt.show()
 
-#    def write_fits(self, filename):
-#
+    def write_fits(self, filename):
+
+         # placeholder if using FITS files in future
+         # currently returns nothing
+         return
+        
 #        from astropy.io import fits
 #        hdu = fits.PrimaryHDU(self.image)
 #        hdul = fits.HDUList([hdu])
