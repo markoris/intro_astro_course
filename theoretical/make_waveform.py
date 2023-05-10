@@ -118,10 +118,23 @@ class binaryBH:
             T_est = self.wave.deltaT*lalsimutils.nextPow2(T_est/self.wave.deltaT)
             if T_est < 16:
                 T_est = 16
-                self.wave.deltaF = 1./T_est
+
+            self.wave.deltaF = 1./T_est
 
             # generate TD waveform based on params
             hoft = lalsimutils.hoft(self.wave)
+
+            # Problem where tstart earlier than frame start
+            # Solution as in util_LALWriteFrame
+            if hoft.epoch > t_start:
+                padStart = int((float(hoft.epoch)-t_start)/hoft.deltaT)
+                # Remake hoft with padding
+                pad_hoft = lal.CreateREAL8TimeSeries("Template h(t)", t_start , 0, hoft.deltaT,
+                                               lalsimutils.lsu_DimensionlessUnit,
+                                               hoft.data.length+padStart)
+                pad_hoft.data.data = np.zeros(pad_hoft.data.length)
+                pad_hoft.data.data[padStart:padStart+hoft.data.length] = hoft.data.data
+                hoft = pad_hoft
 
             channel = instrument+":FAKE-STRAIN"
 
