@@ -62,9 +62,12 @@ class binaryBH:
         # Use lalsimutils from RIFT to create waveform params xml
         thisWave = lalsimutils.ChooseWaveformParams()
         d_min = self.distance
-        d_max = self.distance + 100
+        d_max = self.distance + 10
         thisWave.randomize(dMax=d_max,dMin=d_min,aligned_spin_Q=False,
-                           volumetric_spin_prior_Q=False,sMax=1)
+                           volumetric_spin_prior_Q=False,sMax=1,
+                           default_inclination=0.6407159166115236,
+                           default_phase=2.5830560505242754,
+                           default_polarization=2.078943813888743)
         thisWave.m1 = self.m1*lal.MSUN_SI
         thisWave.m2 = self.m2*lal.MSUN_SI
         
@@ -86,7 +89,7 @@ class binaryBH:
         thisWave.deltaF = deltaF
         thisWave.deltaT = deltaT
         thisWave.approx = lalsim.GetApproximantFromString(thisWave.approx)
-
+        
         self.wave = thisWave
         thisWave = [thisWave]
         # Saves signal parameters in lal usable format
