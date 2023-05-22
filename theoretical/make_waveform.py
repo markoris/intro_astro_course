@@ -190,7 +190,7 @@ def plotWaveform(binary, data):
     """
 
     # Create plot using GWPy
-    plot = Plot(data)
+    plot = Plot(data, figsize=(12,8))
     ax = plot.gca()
     epoch = 1126259462.422-150
     ax.set_epoch(epoch)
