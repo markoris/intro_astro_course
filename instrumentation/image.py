@@ -111,8 +111,9 @@ class Image():
 #
 #        self.image += np.random.uniform(0.1, 0.2, size=(self.n_pixels, self.n_pixels))
 
-    def satellite_transits(self, n_transits=5):
+    def satellite_transits(self):
         from skimage.draw import line
+        n_transits = 5
         transits = np.zeros((self.n_pixels, self.n_pixels, 3))
         transit_paths = np.random.uniform(0, self.n_pixels-1, size=(n_transits, 2)).astype('int')
         for i in range(n_transits):
