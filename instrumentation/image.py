@@ -115,7 +115,6 @@ class Image():
         from skimage.draw import line
         transits = np.zeros((self.n_pixels, self.n_pixels, 3))
         transit_paths = np.random.uniform(0, self.n_pixels-1, size=(n_transits, 2)).astype('int')
-        print(transit_paths)
         for i in range(n_transits):
             rr, cc = line(transit_paths[i, 0], 0, transit_paths[i, 1], self.n_pixels-1)
             self.image[rr, cc, :] = 1
