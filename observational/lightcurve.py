@@ -21,7 +21,7 @@ def fold(time, period):
 def plot_lc(time, flux):
     plt.plot(time,flux)
     plt.grid()
-    plt.ylim([0.98,1.01])
+    plt.ylim([0.985,1.005])
     plt.xlabel('time (sec)')
     plt.ylabel('normalized flux')
     plt.show()
