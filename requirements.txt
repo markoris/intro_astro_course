@@ -36,6 +36,7 @@ h5py==3.8.0
 healpy==1.16.2
 idna==3.4
 igwn-auth-utils==0.4.0
+imageio==2.31.0
 importlib-metadata==6.5.0
 importlib-resources==5.12.0
 ipykernel==6.22.0
@@ -59,6 +60,7 @@ jupyterlab-pygments==0.2.2
 jupyterlab-widgets==3.0.7
 kiwisolver==1.4.4
 lalsuite==7.14
+lazy_loader==0.2
 ligo-gracedb==2.11.0
 ligo-segments==1.4.0
 ligo.skymap==1.0.7
@@ -106,6 +108,7 @@ python-dateutil==2.8.2
 python-json-logger==2.0.7
 python-ligo-lw==1.8.3
 pytz==2023.3
+PyWavelets==1.4.1
 PyYAML==6.0
 pyzmq==25.0.2
 qtconsole==5.4.2
@@ -116,6 +119,7 @@ rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 RIFT==0.0.15.7
 safe-netrc==1.0.1
+scikit-image==0.21.0
 scikit-learn==1.2.2
 scipy==1.10.1
 scitokens==1.7.4
@@ -126,6 +130,7 @@ soupsieve==2.4.1
 stack-data==0.6.2
 terminado==0.17.1
 threadpoolctl==3.1.0
+tifffile==2023.4.12
 tinycss2==1.2.1
 tornado
 tqdm==4.65.0
