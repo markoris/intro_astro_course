@@ -30,7 +30,8 @@ class Image():
                  "satellite_transits": self.satellite_transits,
                  "dead_pixels": self.dead_pixels,
                  "dead_arrays": self.dead_arrays,
-                 "telescope_cover": self.telescope_cover}
+                 "telescope_cover": self.telescope_cover,
+                 "cosmic_rays": self.cosmic_rays}
 
 #    def __init__(self, n_pixels):
 #
@@ -90,21 +91,28 @@ class Image():
     def add_effects(self, effects):
     
         #if "telescope_cover" in effects and "dark_current" not in effects:
-        if "telescope_cover" in effects and "satellite_transits" not in effects:
+        if "telescope_cover" in effects and "satellite_transits" not in effects and "cosmic_rays" not in effects:
             effects.remove("telescope_cover")
             effects.insert(0, "telescope_cover")
 
         #if "dark_current" in effects and "telescope_cover" not in effects:
-        if "satellite_transits" in effects and "telescope_cover" not in effects:
+        if "satellite_transits" in effects and "cosmic_rays" not in effects and "telescope_cover" not in effects:
             #effects.remove("dark_current")
             #effects.insert(0, "dark_current")
             effects.remove("satellite_transits")
             effects.insert(0, "satellite_transits")
+            
+        if "cosmic_rays" in effects and "satellite_transits" not in effects and "telescope_cover" not in effects:
+            #effects.remove("dark_current")
+            #effects.insert(0, "dark_current")
+            effects.remove("cosmic_rays")
+            effects.insert(0, "cosmic_rays")
 
         #if "telescope_cover" in effects and "dark_current" in effects:
-        if "telescope_cover" in effects and "satellite_transits" in effects:
+        if "telescope_cover" in effects and ("satellite_transits" in effects or "cosmic_rays" in effects):
             effects.remove("telescope_cover")
-            effects.remove("satellite_transits")
+            if "satellite_transits" in effects: effects.remove("satellite_transits")
+            if "cosmic_rays" in effects: effects.remove("cosmic_rays")
             effects.insert(0, "telescope_cover")
             # do not reinsert satellite transits, as they should not appear!
             #effects.remove("dark_current")
@@ -114,7 +122,7 @@ class Image():
             try: 
                 self.eff_dict[effect]()
             except KeyError:
-                print("Unknown effect name entered. Check the list of available effects on Line 13!")
+                print('Unknown effect name "{0}" entered. Check the list of available effects on Line 13!'.format(effect))
                 raise StopExecution
 
         if np.max(self.image) > 0.5: # if telescope cover is on, we want extremely low photon counts
@@ -135,9 +143,15 @@ class Image():
 
     def dead_pixels(self):
 
-        dead_pixels = np.random.randint(0, self.n_pixels-1, size=(int(self.n_pixels**2*0.20), 2)) # ~20% of total pixels?
+        dead_pixels = np.random.randint(0, self.n_pixels-1, size=(int(self.n_pixels**2*0.20), 2)) # ~20% of total pixels
         for i in range(dead_pixels.shape[0]):
             self.image[dead_pixels[i, 0], dead_pixels[i, 1]] = 0
+            
+    def cosmic_rays(self):
+
+        cosmic_rays = np.random.randint(0, self.n_pixels-1, size=(5, 2)) # handful of cosmic rays
+        for i in range(cosmic_rays.shape[0]):
+            self.image[cosmic_rays[i, 0], cosmic_rays[i, 1]] = 1
 
     def dead_arrays(self):
 
