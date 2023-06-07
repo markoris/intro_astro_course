@@ -1,10 +1,19 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.measure import block_reduce
 
+class StopExecution(Exception):
+    def _render_traceback_(self):
+        return []
+
 class Image():
 
     def __init__(self, n_pixels):
+        
+        if n_pixels > 4096:
+            print("Number of pixels too high! Maximum number of pixels is 4096.")
+            raise StopExecution
 
         self.n_pixels = n_pixels
 
@@ -102,7 +111,11 @@ class Image():
             #effects.insert(0, "dark_current")
     
         for effect in effects:
-            self.eff_dict[effect]()
+            try: 
+                self.eff_dict[effect]()
+            except KeyError:
+                print("Unknown effect name entered. Check the list of available effects on Line 13!")
+                raise StopExecution
 
         if np.max(self.image) > 0.5: # if telescope cover is on, we want extremely low photon counts
             self.image /= np.max(self.image)
@@ -122,13 +135,13 @@ class Image():
 
     def dead_pixels(self):
 
-        dead_pixels = np.random.randint(0, self.n_pixels-1, size=(10000, 2)) # ~20% of total pixels?
+        dead_pixels = np.random.randint(0, self.n_pixels-1, size=(int(self.n_pixels**2*0.20), 2)) # ~20% of total pixels?
         for i in range(dead_pixels.shape[0]):
             self.image[dead_pixels[i, 0], dead_pixels[i, 1]] = 0
 
     def dead_arrays(self):
 
-        dead_arrays = np.random.randint(0, self.n_pixels-1, size=(30))
+        dead_arrays = np.random.randint(0, self.n_pixels-1, size=(int(self.n_pixels*0.20)))
         self.image[dead_arrays, :] = 0
     
     def telescope_cover(self):
