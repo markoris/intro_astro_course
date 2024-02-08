@@ -25,7 +25,7 @@ class Image():
         bs = (int(shape_orig/self.n_pixels), int(shape_orig/self.n_pixels), 1)
         # generate downsampled image
         self.image = block_reduce(image_orig, block_size=bs, func=np.mean)
-
+        
         self.eff_dict = {#"dark_current": self.dark_current,
                  "satellite_transits": self.satellite_transits,
                  "dead_pixels": self.dead_pixels,
@@ -89,7 +89,7 @@ class Image():
 #                self.image = self.multivariate_gaussian(self.pos, mu, sigma)
 
     def add_effects(self, effects):
-    
+            
         #if "telescope_cover" in effects and "dark_current" not in effects:
         if "telescope_cover" in effects and "satellite_transits" not in effects and "cosmic_rays" not in effects:
             effects.remove("telescope_cover")
@@ -125,8 +125,8 @@ class Image():
                 print('Unknown effect name "{0}" entered. Check the list of available effects on Line 13!'.format(effect))
                 raise StopExecution
 
-        if np.max(self.image) > 0.5: # if telescope cover is on, we want extremely low photon counts
-            self.image /= np.max(self.image)
+        #if np.max(self.image) > 0.5: # if telescope cover is on, we want extremely low photon counts
+        #    self.image /= np.max(self.image)
 
 #    def dark_current(self):
 #
@@ -145,7 +145,7 @@ class Image():
 
         dead_pixels = np.random.randint(0, self.n_pixels-1, size=(int(self.n_pixels**2*0.20), 2)) # ~20% of total pixels
         for i in range(dead_pixels.shape[0]):
-            self.image[dead_pixels[i, 0], dead_pixels[i, 1]] = 0
+            self.image[dead_pixels[i, 0], dead_pixels[i, 1]] = -1
             
     def cosmic_rays(self):
 
@@ -156,7 +156,7 @@ class Image():
     def dead_arrays(self):
 
         dead_arrays = np.random.randint(0, self.n_pixels-1, size=(int(self.n_pixels*0.20)))
-        self.image[dead_arrays, :] = 0
+        self.image[dead_arrays, :] = -1
     
     def telescope_cover(self):
         self.image = np.zeros((self.n_pixels, self.n_pixels), dtype=np.int8)
@@ -171,6 +171,8 @@ class Image():
         #self.image = np.where(((self.image < 0.01) & (self.image != 0)), 0, self.image)
         plt.figure(figsize=(7, 7))
         plt.imshow(self.image)
+        plt.set_cmap('gray')
+        plt.clim(-1, 1)
         plt.tight_layout()
 
     def write_fits(self, filename):
