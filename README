@@ -17,7 +17,7 @@ The following guide assumes working knowledge of git repositories. Users are fre
 Once the repository is cloned locally, follow [these instructions](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/) to set up a Python virtual environment.
 Once finished with the [activate a virtual environment step](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/), [use the requirements file to install the required Python dependencies](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).
 
-With the virtual environment setup and activated, the notebooks should run smoothly using [Jupyter notebooks](https://www.codecademy.com/article/how-to-use-jupyter-notebooks). To start, navigate to the intro_astro_course directory and run ```jupyter notebook```. From there, you should be able to navigate to the respective sub-directories (e.g. instrumentation, observational, theoretical) and open the respective ```.ipynb``` to start using the code in the notebook.
+With the virtual environment setup and activated, the notebooks should run smoothly using [Jupyter notebooks](https://www.codecademy.com/article/how-to-use-jupyter-notebooks). To start, navigate to the intro_astro_course directory and run `jupyter notebook`. From there, you should be able to navigate to the respective sub-directories (e.g. instrumentation, observational, theoretical) and open the respective `.ipynb` to start using the code in the notebook.
 
 ## Reach out to us!
 
